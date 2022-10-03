@@ -2,6 +2,7 @@ package editor
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/odas0r/cmd/pkg/fs"
 	"github.com/odas0r/cmd/pkg/shell"
@@ -23,9 +24,11 @@ func Edit(path string) error {
 	return nil
 }
 
-func Fzf(content, prompt string) string {
-	echo := fmt.Sprintf("echo \"%s\"", content)
-	fzf := "fzf-tmux -p 40% --print-query"
+func Fzf(content []string, prompt string) string {
+	contentStr := strings.Join(content, "\n")
+
+	echo := fmt.Sprintf("echo \"%s\"", contentStr)
+	fzf := "fzf-tmux -p 50%"
 	fzfPrompt := fmt.Sprintf("--prompt=\"%s\"", prompt)
 
 	fzfCommand := fmt.Sprintf(`
@@ -33,13 +36,19 @@ func Fzf(content, prompt string) string {
   `, echo, fzf, fzfPrompt)
 
 	// execute the bash command and return the output as a string
-	return shell.ExecOutput(fzfCommand)
+	output := shell.ExecOutput(fzfCommand)
 
+	// replace new lines with empty string
+	output = strings.ReplaceAll(output, "\n", "")
+
+	return strings.TrimSpace(output)
 }
 
-func FzfInput(content, prompt string) string {
-	echo := fmt.Sprintf("echo \"%s\"", content)
-	fzf := "fzf-tmux -p 40% --print-query"
+func FzfInput(content []string, prompt string) string {
+	contentStr := strings.Join(content, "\n")
+
+	echo := fmt.Sprintf("echo \"%s\"", contentStr)
+	fzf := "fzf-tmux -p 50% --print-query"
 	fzfPrompt := fmt.Sprintf("--prompt=\"%s\"", prompt)
 
 	fzfCommand := fmt.Sprintf(`
@@ -57,8 +66,12 @@ func FzfInput(content, prompt string) string {
   `, echo, fzf, fzfPrompt)
 
 	// execute the bash command and return the output as a string
-	return shell.ExecOutput(fzfCommand)
+	output := shell.ExecOutput(fzfCommand)
 
+	// replace new lines with empty string
+	output = strings.ReplaceAll(output, "\n", "")
+
+	return strings.TrimSpace(output)
 }
 
 func Notify(text string) {

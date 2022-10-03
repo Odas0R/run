@@ -37,9 +37,6 @@ func (c Conf) Init() error {
 	}
 
 	if fs.Exists(d) && fs.Exists(c.Path()) {
-		// if err := os.RemoveAll(d); err != nil {
-		// 	return err
-		// }
     return nil
 	}
 

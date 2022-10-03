@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"log"
-	"strings"
 
 	"github.com/odas0r/cmd/pkg/config"
 	"github.com/odas0r/cmd/pkg/editor"
@@ -42,7 +41,10 @@ func App() *cli.App {
 			}
 
 			// spawn the fzf menu
-			repoPath := editor.Fzf(strings.Join(gitDirs, "\n"), "Repositories > ")
+			repoPath := editor.Fzf((gitDirs), "Repos > ")
+			if repoPath == "" {
+				return nil
+			}
 
 			// query the config json for the history key
 			history := conf.QueryVal("history")
@@ -57,9 +59,7 @@ func App() *cli.App {
 			}
 
 			// spawn the fzf menu with the history of executed commands
-			input := editor.FzfInput(strings.Join(historyStr, "\n"), "")
-			// remove all \n from the input
-			input = strings.ReplaceAll(input, "\n", "")
+			input := editor.FzfInput(historyStr, "Command > ")
 
 			// append string to the historyStr slice but only if it doesn't already
 			// contain the string
@@ -69,9 +69,6 @@ func App() *cli.App {
 					return err
 				}
 			}
-
-			// remove all \n from the repoPath
-			repoPath = strings.ReplaceAll(repoPath, "\n", "")
 
 			// execute a bash script on a specific path
 			shell.ExecWithPath(input, repoPath)
