@@ -36,10 +36,11 @@ func (c Conf) Init() error {
 		return fmt.Errorf("empty directory id")
 	}
 
-	if fs.Exists(d) {
-		if err := os.RemoveAll(d); err != nil {
-			return err
-		}
+	if fs.Exists(d) && fs.Exists(c.Path()) {
+		// if err := os.RemoveAll(d); err != nil {
+		// 	return err
+		// }
+    return nil
 	}
 
 	if err := dir.Create(d); err != nil {
@@ -135,6 +136,11 @@ func (c Conf) Query(q string) string {
 	}
 
 	return fmt.Sprintf("%v", result)
+}
+
+
+func (c Conf) QueryVal(q string) interface{} {
+	return gojsonq.New().File(c.Path()).Find(q)
 }
 
 // QueryPrint prints the output of Query.

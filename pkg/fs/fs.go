@@ -3,6 +3,8 @@ package fs
 import (
 	"errors"
 	"io/fs"
+	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -36,6 +38,43 @@ func Cat(text string, path string) error {
 	}
 
 	return nil
+}
+
+func Find(path string) []string {
+	var files []string
+	err := fs.WalkDir(os.DirFS(path), ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return files
+}
+
+// list all directories full paths, recursively, in a given path with a given depth limit (0 for no limit)
+func FindDir(path string, depth int) []string {
+	var dirs []string
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			dirs = append(dirs, path+"/"+file.Name())
+			if depth > 0 {
+				dirs = append(dirs, FindDir(path+"/"+file.Name(), depth-1)...)
+			}
+		}
+	}
+	return dirs
 }
 
 func Exists(path string) bool {

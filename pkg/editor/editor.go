@@ -12,25 +12,65 @@ func Edit(path string) error {
 		return fmt.Errorf("file does not exist on given path")
 	}
 
-	return shell.Exec(fmt.Sprintf(`
+	shell.Exec(fmt.Sprintf(`
     if [[ ! -S "$NVIM_SOCKET" ]]; then
       nvim "+${2}" --listen "$NVIM_SOCKET" "%s"
     else
       nvim --server "$NVIM_SOCKET" --remote-send "<C-\><C-N>:wincmd p | edit %s<CR>"
     fi
   `, path, path))
+
+	return nil
 }
 
-func Notify(text string) error {
-	return shell.Exec(fmt.Sprintf(`
+func Fzf(content, prompt string) string {
+	echo := fmt.Sprintf("echo \"%s\"", content)
+	fzf := "fzf-tmux -p 40% --print-query"
+	fzfPrompt := fmt.Sprintf("--prompt=\"%s\"", prompt)
+
+	fzfCommand := fmt.Sprintf(`
+    %s | %s %s
+  `, echo, fzf, fzfPrompt)
+
+	// execute the bash command and return the output as a string
+	return shell.ExecOutput(fzfCommand)
+
+}
+
+func FzfInput(content, prompt string) string {
+	echo := fmt.Sprintf("echo \"%s\"", content)
+	fzf := "fzf-tmux -p 40% --print-query"
+	fzfPrompt := fmt.Sprintf("--prompt=\"%s\"", prompt)
+
+	fzfCommand := fmt.Sprintf(`
+    readarray -t lines < <(%s | %s %s)
+    query="${lines[0]}"
+    selected="${lines[1]}"
+    if [[ -n "$query" ]]; then
+      echo "$query"
+      exit 0
+    fi
+    if [[ -n "$selected" ]]; then
+      echo "$selected"
+      exit 0
+    fi
+  `, echo, fzf, fzfPrompt)
+
+	// execute the bash command and return the output as a string
+	return shell.ExecOutput(fzfCommand)
+
+}
+
+func Notify(text string) {
+	shell.Exec(fmt.Sprintf(`
     if [[ -S "$NVIM_SOCKET" ]]; then
       nvim --server "$NVIM_SOCKET" --remote-send '<ESC>:lua vim.notify("%s", nil, {title="Pomodoro"})<CR>'
     fi
   `, text))
 }
 
-func NotifyByType(text string, ntype string) error {
-	return shell.Exec(fmt.Sprintf(`
+func NotifyByType(text string, ntype string) {
+	shell.Exec(fmt.Sprintf(`
     if [[ -S "$NVIM_SOCKET" ]]; then
       nvim --server "$NVIM_SOCKET" --remote-send '<ESC>:lua vim.notify("%s", "%s", {title="Pomodoro"})<CR>'
     fi

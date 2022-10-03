@@ -1,30 +1,88 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
+	"strings"
 
+	"github.com/odas0r/cmd/pkg/config"
+	"github.com/odas0r/cmd/pkg/editor"
+	"github.com/odas0r/cmd/pkg/fs"
+	"github.com/odas0r/cmd/pkg/shell"
+	"github.com/samber/lo"
 	"github.com/urfave/cli/v2"
 )
 
-// var (
-// 	conf = c.Conf{
-// 		Id:   "",
-// 		Dir:  "/home/odas0r/github.com/odas0r/configs",
-// 		File: "config.json",
-// 	}
-// )
+var (
+	conf = config.Conf{
+		Id:   "run-cmd",
+		Dir:  "/home/odas0r/github.com/odas0r/configs",
+		File: "config.json",
+	}
+)
+
+func init() {
+	if err := conf.Init(); err != nil {
+		log.Fatal(err)
+	}
+}
 
 func App() *cli.App {
 	app := &cli.App{
-		Name:                 "//TODO",
-		Usage:                "//TODO",
+		Name:                 "Run a command on a given path",
 		EnableBashCompletion: true,
+		Action: func(_ *cli.Context) error {
+			dirs := fs.FindDir("/home/odas0r/github.com", 1)
+
+			// filter the directories that have a .git folder in them and print them
+			var gitDirs []string
+			for _, dir := range dirs {
+				if fs.Exists(dir + "/.git") {
+					gitDirs = append(gitDirs, dir)
+				}
+			}
+
+			// spawn the fzf menu
+			repoPath := editor.Fzf(strings.Join(gitDirs, "\n"), "Repositories > ")
+
+			// query the config json for the history key
+			history := conf.QueryVal("history")
+			if history == nil {
+				history = []interface{}{}
+			}
+
+			// convert the history to a string slice
+			var historyStr []string
+			for _, h := range history.([]interface{}) {
+				historyStr = append(historyStr, h.(string))
+			}
+
+			// spawn the fzf menu with the history of executed commands
+			input := editor.FzfInput(strings.Join(historyStr, "\n"), "")
+			// remove all \n from the input
+			input = strings.ReplaceAll(input, "\n", "")
+
+			// append string to the historyStr slice but only if it doesn't already
+			// contain the string
+			if !lo.Contains(historyStr, input) && len(input) > 0 {
+				historyStr = append(historyStr, input)
+				if err := conf.Set("history", historyStr); err != nil {
+					return err
+				}
+			}
+
+			// remove all \n from the repoPath
+			repoPath = strings.ReplaceAll(repoPath, "\n", "")
+
+			// execute a bash script on a specific path
+			shell.ExecWithPath(input, repoPath)
+
+			return nil
+		},
 		Commands: []*cli.Command{
 			{
-				Name: "hello",
+				Name: "config",
 				Action: func(c *cli.Context) error {
-					fmt.Println("Hello world!")
-					return nil
+					return editor.Edit(conf.Path())
 				},
 			},
 		},
