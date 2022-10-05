@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -27,9 +28,9 @@ func ShellOutputWithPath(command string, path string) (string, string, error) {
 
 	// get the absolute path of the recieved path
 	absPath, err := filepath.Abs(path)
-  if err != nil {
-    return "", "", err
-  }
+	if err != nil {
+		return "", "", err
+	}
 
 	cmd := exec.Command("bash", "-c", command)
 	cmd.Dir = absPath
@@ -39,6 +40,31 @@ func ShellOutputWithPath(command string, path string) (string, string, error) {
 	err = cmd.Run()
 
 	return stdout.String(), stderr.String(), err
+}
+
+func ShellInteractive(command string) error {
+	cmd := exec.Command("bash", "-c", command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd.Run()
+}
+
+func ShellInteractiveWithPath(command string, path string) error {
+	// get the absolute path of the recieved path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("bash", "-c", command)
+	cmd.Dir = absPath
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd.Run()
 }
 
 func Exec(command string) {
@@ -69,4 +95,18 @@ func ExecWithPath(command string, path string) {
 	}
 
 	fmt.Print(out)
+}
+
+func ExecInteractive(command string) {
+	err := ShellInteractive(command)
+	if err != nil {
+		log.Printf("error: %v\n", err)
+	}
+}
+
+func ExecInteractiveWithPath(command string, path string) {
+  err := ShellInteractiveWithPath(command, path)
+  if err != nil {
+    log.Printf("error: %v\n", err)
+  }
 }

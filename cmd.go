@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/odas0r/cmd/pkg/config"
@@ -70,8 +71,11 @@ func App() *cli.App {
 				}
 			}
 
+      fmt.Printf("input: %v\n", input)
+      fmt.Printf("repoPath: %v\n", repoPath)
+
 			// execute a bash script on a specific path
-			shell.ExecWithPath(input, repoPath)
+			shell.ExecInteractiveWithPath(input, repoPath)
 
 			return nil
 		},
