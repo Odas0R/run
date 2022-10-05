@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/odas0r/cmd/pkg/config"
@@ -60,22 +59,19 @@ func App() *cli.App {
 			}
 
 			// spawn the fzf menu with the history of executed commands
-			input := editor.FzfInput(historyStr, "Command > ")
+			output := editor.FzfPrintQuery(historyStr, "Command > ")
 
 			// append string to the historyStr slice but only if it doesn't already
 			// contain the string
-			if !lo.Contains(historyStr, input) && len(input) > 0 {
-				historyStr = append(historyStr, input)
+			if !lo.Contains(historyStr, output) && len(output) > 0 {
+				historyStr = append(historyStr, output)
 				if err := conf.Set("history", historyStr); err != nil {
 					return err
 				}
 			}
 
-      fmt.Printf("input: %v\n", input)
-      fmt.Printf("repoPath: %v\n", repoPath)
-
 			// execute a bash script on a specific path
-			shell.ExecInteractiveWithPath(input, repoPath)
+			shell.ExecInteractiveWithPath(output, repoPath)
 
 			return nil
 		},

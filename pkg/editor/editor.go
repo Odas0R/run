@@ -44,7 +44,7 @@ func Fzf(content []string, prompt string) string {
 	return strings.TrimSpace(output)
 }
 
-func FzfInput(content []string, prompt string) string {
+func FzfPrintQuery(content []string, prompt string) string {
 	contentStr := strings.Join(content, "\n")
 
 	echo := fmt.Sprintf("echo \"%s\"", contentStr)
@@ -55,12 +55,12 @@ func FzfInput(content []string, prompt string) string {
     readarray -t lines < <(%s | %s %s)
     query="${lines[0]}"
     selected="${lines[1]}"
-    if [[ -n "$query" ]]; then
-      echo "$query"
-      exit 0
-    fi
     if [[ -n "$selected" ]]; then
       echo "$selected"
+      exit 0
+    fi
+    if [[ -n "$query" ]]; then
+      echo "$query"
       exit 0
     fi
   `, echo, fzf, fzfPrompt)
